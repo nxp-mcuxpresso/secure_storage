@@ -1,0 +1,42 @@
+# Copyright (c) 2024 Nordic Semiconductor
+# Copyright (c) 2025 NXP Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+choice SECURE_STORAGE_ITS_STORE_IMPLEMENTATION
+	prompt "ITS store module implementation"
+
+config MCUX_COMPONENT_middleware.SECURE_STORAGE_ITS_STORE_IMPLEMENTATION_FATFS
+	bool "FATFS based ITS store module implementation"
+	
+config MCUX_COMPONENT_middleware.SECURE_STORAGE_ITS_STORE_IMPLEMENTATION_LITTLEFS
+	bool "LittleFS based ITS store module implementation"
+
+config MCUX_COMPONENT_middleware.SECURE_STORAGE_ITS_STORE_IMPLEMENTATION_CUSTOM
+	bool "Custom ITS store module implementation"
+	help
+	  Implement the functions declared in <zephyr/secure_storage/its/store.h>.
+	  The header is made available when this Kconfig option is enabled.
+
+endchoice # SECURE_STORAGE_ITS_STORE_IMPLEMENTATION
+
+if MCUX_COMPONENT_middleware.SECURE_STORAGE_ITS_STORE_IMPLEMENTATION_FATFS
+
+config SECURE_STORAGE_ITS_STORE_FATFS_PREFIX
+        string "Subdir in which to store the files, with a trailing slash. Can be empty."
+        default "its/"
+	help
+          Provides folder name where ITS storage will be created on fatfs
+          Macro value is in quotes
+
+endif # SECURE_STORAGE_ITS_STORE_IMPLEMENTATION_FATFS
+
+if MCUX_COMPONENT_middleware.SECURE_STORAGE_ITS_STORE_IMPLEMENTATION_LITTLEFS
+
+config SECURE_STORAGE_ITS_STORE_LITTLEFS_PREFIX
+        string "Subdir in which to store the files. Can be empty."
+        default "its"
+	help
+          Provides folder name where ITS storage will be created on littlefs
+          Macro value is in quotes
+
+endif # SECURE_STORAGE_ITS_STORE_IMPLEMENTATION_LITTLEFS
