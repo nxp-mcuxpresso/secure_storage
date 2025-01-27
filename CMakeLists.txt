@@ -106,6 +106,7 @@ if (CONFIG_MCUX_COMPONENT_middleware.SECURE_STORAGE_ITS_STORE_IMPLEMENTATION_FAT
     mcux_add_source(
         SOURCES include/secure_storage_log.h
         SOURCES include/store_extension.h
+        SOURCES include/secure_storage.h
         BASE_PATH ${SdkRootDirPath}/middleware/secure_storage
     )
     mcux_add_source(
@@ -136,6 +137,7 @@ if (CONFIG_MCUX_COMPONENT_middleware.SECURE_STORAGE_ITS_STORE_IMPLEMENTATION_LIT
     )
     mcux_add_source(
         SOURCES include/secure_storage_log.h
+        SOURCES include/secure_storage.h
         SOURCES include/store_extension.h
         BASE_PATH ${SdkRootDirPath}/middleware/secure_storage
     )
