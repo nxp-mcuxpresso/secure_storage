@@ -1,0 +1,13 @@
+--------------------------------------------
+NXP Software Content Register
+
+Package:                  secure_storage
+Version:                  1.0.0
+Outgoing License:         Apache-2.0
+License File:             LICENSE
+Type of Content:          source code
+Description and comments: PSA secure storage APIs
+Release Location:         https://github.com/nxp-mcuxpresso/secure_storage
+Origin:                   
+                          NXP (Apache-2.0)  
+                          Zephyr (Apache-2.0) - https://github.com/zephyrproject-rtos/zephyr.git
