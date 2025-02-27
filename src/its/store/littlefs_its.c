@@ -11,7 +11,9 @@
 #include <secure_storage_log.h>
 
 #include "lfs.h"
-#include "lfs_mflash.h"
+
+extern int lfs_get_default_config(struct lfs_config *lfsc);
+extern int lfs_storage_init(const struct lfs_config *lfsc);
 
 lfs_t lfs;
 struct lfs_config cfg;
@@ -245,12 +247,12 @@ psa_status_t secure_storage_its_store_remove(secure_storage_its_uid_t uid)
 /* Create the top level directory for NVM storage */
 psa_status_t secure_storage_its_initialize(void)
 {
-        status_t status;
+        int status;
         int res;
         lfs_get_default_config(&cfg);
 
         status = lfs_storage_init(&cfg);
-        if (status != kStatus_Success)
+        if (status != 0)
         {
             LOG_ERR("LFS storage init failed: %i\r\n", status);
             return PSA_ERROR_STORAGE_FAILURE;

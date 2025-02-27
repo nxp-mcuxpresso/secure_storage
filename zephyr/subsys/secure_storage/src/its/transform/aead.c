@@ -1,6 +1,6 @@
 /* 
- * Copyright 2025 NXP
  * Copyright (c) 2024 Nordic Semiconductor
+ * Copyright 2025 NXP
  *
  * SPDX-License-Identifier: Apache-2.0
  *
