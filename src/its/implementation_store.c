@@ -124,7 +124,7 @@ psa_status_t secure_storage_its_get_info(secure_storage_its_uid_t uid,
 {
 	psa_status_t ret;
         psa_its_file_header_t header;
-        uint32_t data_len;
+        size_t data_len;
         
 	if (uid.uid == 0 || p_info == NULL) {
 		return PSA_ERROR_INVALID_ARGUMENT;
