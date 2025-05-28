@@ -1,0 +1,64 @@
+{
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "spdxVersion": "SPDX-2.3",
+  "creationInfo": {
+    "created": "2025-05-28T07:34:29Z",
+    "creators": [
+      "Organization: NXP"
+    ],
+    "licenseListVersion": "3.20"
+  },
+  "name": "secure_storage-v25.06.00",
+  "dataLicense": "CC0-1.0",
+  "documentNamespace": "https://nxp.com/spdx/1e52b618-e4fd-4b2e-b299-3e3c1db8f7a0",
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-package-1e52b618-e4fd-4b2e-b299-3e3c1db8f7a0",
+      "name": "secure_storage",
+      "versionInfo": "v25.06.00",
+      "licenseConcluded": "(Apache-2.0)",
+      "licenseDeclared": "(Apache-2.0)",
+      "downloadLocation": "https://github.com/nxp-mcuxpresso/secure_storage",
+      "originator": "Organization: NXP",
+      "supplier": "NOASSERTION",
+      "externalRefs": [],
+      "filesAnalyzed": false
+    },
+    {
+      "SPDXID": "SPDXRef-package-2cb171e8-7936-442c-9083-83aeff377840",
+      "name": "Zephyr OS",
+      "versionInfo": "v0.24.7",
+      "licenseConcluded": "Apache-2.0",
+      "licenseDeclared": "Apache-2.0",
+      "homepage": "https://www.zephyrproject.org/",
+      "downloadLocation": "NOASSERTION",
+      "originator": "Organization: zephyrproject-rtos",
+      "supplier": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:github/zephyrproject-rtos/docker-image@v0.24.7",
+          "referenceType": "purl"
+        },
+        {
+          "referenceCategory": "OTHER",
+          "referenceLocator": "78cfabe6-f2c0-4e45-b239-d5187898668f",
+          "referenceType": "BlackDuck-ComponentOrigin"
+        }
+      ],
+      "filesAnalyzed": false
+    }
+  ],
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-package-1e52b618-e4fd-4b2e-b299-3e3c1db8f7a0"
+    },
+    {
+      "spdxElementId": "SPDXRef-package-1e52b618-e4fd-4b2e-b299-3e3c1db8f7a0",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-package-2cb171e8-7936-442c-9083-83aeff377840"
+    }
+  ]
+}
