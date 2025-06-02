@@ -3,6 +3,12 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+if (CONFIG_MCUX_COMPONENT_middleware.SECURE_STORAGE)
+    mcux_add_macro(
+        "-DSECURE_STORAGE"
+    )
+endif()
+
 if (CONFIG_MCUX_COMPONENT_middleware.SECURE_STORAGE_ITS_IMPLEMENTATION)
     mcux_add_source(
         SOURCES src/its/implementation.c
@@ -33,6 +39,9 @@ if (CONFIG_MCUX_COMPONENT_middleware.SECURE_STORAGE_ITS_IMPLEMENTATION)
         INCLUDES include
         BASE_PATH ${SdkRootDirPath}/middleware/secure_storage/
     )
+    mcux_add_macro(
+        "-DSECURE_STORAGE_ITS_IMPLEMENTATION"
+    )
 endif()
 
 if (CONFIG_MCUX_COMPONENT_middleware.SECURE_STORAGE_ITS_IMPLEMENTATION_WITH_ONLY_STORE)
@@ -62,6 +71,9 @@ if (CONFIG_MCUX_COMPONENT_middleware.SECURE_STORAGE_ITS_IMPLEMENTATION_WITH_ONLY
     mcux_add_include(
         INCLUDES include
         BASE_PATH ${SdkRootDirPath}/middleware/secure_storage/
+    )
+    mcux_add_macro(
+        "-DSECURE_STORAGE_ITS_IMPLEMENTATION_WITH_ONLY_STORE"
     )
 endif()
 
@@ -96,6 +108,9 @@ if (CONFIG_MCUX_COMPONENT_middleware.SECURE_STORAGE_ITS_TRANSFORM_IMPLEMENTATION
         INCLUDES include
         BASE_PATH ${SdkRootDirPath}/middleware/secure_storage/
     )
+    mcux_add_macro(
+        "-DSECURE_STORAGE_ITS_TRANSFORM_IMPLEMENTATION_AEAD"
+    )
 endif()
 
 if (CONFIG_MCUX_COMPONENT_middleware.SECURE_STORAGE_ITS_STORE_IMPLEMENTATION_FATFS)
@@ -128,6 +143,9 @@ if (CONFIG_MCUX_COMPONENT_middleware.SECURE_STORAGE_ITS_STORE_IMPLEMENTATION_FAT
         INCLUDES include
         BASE_PATH ${SdkRootDirPath}/middleware/secure_storage/
     )
+    mcux_add_macro(
+        "-DSECURE_STORAGE_ITS_STORE_IMPLEMENTATION_FATFS"
+    )
 endif()
 
 if (CONFIG_MCUX_COMPONENT_middleware.SECURE_STORAGE_ITS_STORE_IMPLEMENTATION_LITTLEFS)
@@ -159,5 +177,8 @@ if (CONFIG_MCUX_COMPONENT_middleware.SECURE_STORAGE_ITS_STORE_IMPLEMENTATION_LIT
     mcux_add_include(
         INCLUDES include
         BASE_PATH ${SdkRootDirPath}/middleware/secure_storage/
+    )
+    mcux_add_macro(
+        "-DSECURE_STORAGE_ITS_STORE_IMPLEMENTATION_LITTLEFS"
     )
 endif()
