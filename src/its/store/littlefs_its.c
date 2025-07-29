@@ -39,7 +39,6 @@ psa_status_t secure_storage_its_store_set(secure_storage_its_uid_t uid,
         lfs_file_t file;
 	char name[NAME_BUF_SIZE];
         psa_status_t status = PSA_ERROR_STORAGE_FAILURE;
-        size_t n;
 
         if (!lfs_mounted)
         {
@@ -81,8 +80,6 @@ psa_status_t secure_storage_its_store_get(secure_storage_its_uid_t uid, size_t d
 {
         int res;
         lfs_file_t file;
-        uint8_t buf[16];
-	psa_status_t ret;
 	char name[NAME_BUF_SIZE];
 
         if (!lfs_mounted)
@@ -125,7 +122,6 @@ psa_status_t secure_storage_its_store_set_at_offset(secure_storage_its_uid_t uid
         lfs_file_t file;
 	char name[NAME_BUF_SIZE];
         psa_status_t status = PSA_ERROR_STORAGE_FAILURE;
-        size_t n;
 
         if (!lfs_mounted)
         {
@@ -176,8 +172,6 @@ psa_status_t secure_storage_its_store_get_from_offset(secure_storage_its_uid_t u
 {
         int res;
         lfs_file_t file;
-        uint8_t buf[16];
-	psa_status_t ret;
 	char name[NAME_BUF_SIZE];
 
         if (!lfs_mounted)

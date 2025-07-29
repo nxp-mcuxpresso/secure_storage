@@ -145,8 +145,6 @@ psa_status_t secure_storage_its_set(secure_storage_its_uid_t uid, size_t data_le
 				    const void *p_data, psa_storage_create_flags_t create_flags)
 {
 	psa_status_t ret;
-        psa_its_file_header_t header;
-        uint32_t offset = 0;
 
 	if (uid.uid == 0 || (p_data == NULL && data_length != 0)) {
 		return PSA_ERROR_INVALID_ARGUMENT;
