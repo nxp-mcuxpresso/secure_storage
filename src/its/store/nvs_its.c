@@ -1,6 +1,17 @@
-/* Copyright (c) 2024 Nordic Semiconductor
+/*
+ * Copyright (c) 2024 Nordic Semiconductor
+ * Copyright 2026 NXP
+ *
  * SPDX-License-Identifier: Apache-2.0
+ *
+ * \file
+ *
+ * This source code is imported from Zephyr project.
+ * Note a few include modifications were required to make it compile in a non
+ * Zephyr environment.
+ *
  */
+
 #include <zephyr/secure_storage/its/store.h>
 #include <zephyr/secure_storage/its/store/settings_get.h>
 #include <stdio.h>
