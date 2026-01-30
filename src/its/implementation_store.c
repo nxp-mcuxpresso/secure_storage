@@ -19,7 +19,9 @@
 
 #include <secure_storage_log.h>
 
+#if !defined(MIN)
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
+#endif
 
 #define PSA_ITS_MAGIC_STRING "PSA\0ITS\0"
 #define PSA_ITS_MAGIC_LENGTH 8
