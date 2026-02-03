@@ -51,7 +51,7 @@ config SECURE_STORAGE_64_BIT_UID
 
 config SECURE_STORAGE_ITS_MAX_DATA_SIZE
 	int "Maximum data size of an ITS entry in bytes"
-	default 128
+	default 256
 	help
 	  The maximum size, in bytes, that the data of an ITS entry can be.
 	  Increasing this value increases the stack usage when serving PSA ITS API calls.
