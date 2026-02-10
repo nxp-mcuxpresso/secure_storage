@@ -84,8 +84,25 @@ static int init_settings_subsys(void)
 #if (ZEPHYR_SDK)
 SYS_INIT(init_settings_subsys, APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY);
 #else
-#undef BUILD_ASSERT
+#undef BUILD_ASSERT /* clear out common version */
+/* C++11 has static_assert built in */
+#if defined(__cplusplus) && (__cplusplus >= 201103L)
 #define BUILD_ASSERT(EXPR, MSG...) static_assert(EXPR, "" MSG)
+
+/*
+* GCC 4.6 and higher have the C11 _Static_assert built in and its
+* output is easier to understand than the common BUILD_ASSERT macros.
+* Don't use this in C++98 mode though (which we can hit, as
+* static_assert() is not available)
+*/
+#elif !defined(__cplusplus) && \
+  (((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 6))) ||  \
+   (__STDC_VERSION__) >= 201100)
+#define BUILD_ASSERT(EXPR, MSG...) _Static_assert((EXPR), "" MSG)
+#else
+#define BUILD_ASSERT(EXPR, MSG...)
+#endif
+
 #define __ASSERT_NO_MSG(EXPR) assert(EXPR)
 #endif
 
@@ -101,7 +118,7 @@ void secure_storage_its_store_settings_get_name(
 	secure_storage_its_uid_t uid,
 	char name[static SECURE_STORAGE_ITS_STORE_SETTINGS_NAME_BUF_SIZE])
 {
-	int ret;
+	int ret __attribute__((unused));
 
 #ifdef CONFIG_SECURE_STORAGE_64_BIT_UID
 	ret = snprintf(name, SECURE_STORAGE_ITS_STORE_SETTINGS_NAME_BUF_SIZE,
