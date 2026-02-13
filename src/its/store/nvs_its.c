@@ -39,49 +39,6 @@ static int init_settings_subsys(void)
 	}
 	return ret;
 }
-#else
-static int init_settings_subsys(void)
-{
-    int status = 0;
-    const struct flash_area *fa;
-    static bool initialized = false;
-
-    if (initialized)
-    {
-        return PSA_SUCCESS;
-    }
-
-    /* Get flash memory driver params */
-    status = flash_area_open(SETTINGS_PARTITION, &fa);
-    if (status != 0)
-    {
-        LOG_DBG("NVS flash_area_open failed: %i\r\n", status);
-        return PSA_ERROR_STORAGE_FAILURE;
-    }
-
-    /* Flash memory init */
-    status = flash_init(fa->fa_dev);
-    if (status != 0)
-    {
-        LOG_DBG("NVS flash_init failed: %i\r\n", status);
-        return PSA_ERROR_STORAGE_FAILURE;
-    }
-
-    /* Zephyr Settings module init */
-    status = settings_subsys_init();
-    if (status != 0)
-    {
-        LOG_DBG("NVS flash_init failed: %i\r\n", status);
-        return PSA_ERROR_STORAGE_FAILURE;;
-    }
-
-    initialized = true;
-
-    return PSA_SUCCESS;
-}
-#endif
-
-#if (ZEPHYR_SDK)
 SYS_INIT(init_settings_subsys, APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY);
 #else
 #undef BUILD_ASSERT /* clear out common version */
@@ -140,13 +97,6 @@ psa_status_t secure_storage_its_store_set(secure_storage_its_uid_t uid,
 	int ret;
 	char name[SECURE_STORAGE_ITS_STORE_SETTINGS_NAME_BUF_SIZE];
 
-#if (!ZEPHYR_SDK)
-    if (init_settings_subsys() != PSA_SUCCESS)
-    {
-        return PSA_ERROR_STORAGE_FAILURE;
-    }
-#endif
-
 	secure_storage_its_store_settings_get_name(uid, name);
 
 	ret = settings_save_one(name, data, data_length);
@@ -187,13 +137,6 @@ psa_status_t secure_storage_its_store_get(secure_storage_its_uid_t uid, size_t d
 	char name[SECURE_STORAGE_ITS_STORE_SETTINGS_NAME_BUF_SIZE] = {0};
 	struct load_params load_params = {.data_size = data_size, .data = data, .ret = -ENOENT};
 
-#if (!ZEPHYR_SDK)
-    if (init_settings_subsys() != PSA_SUCCESS)
-    {
-        return PSA_ERROR_STORAGE_FAILURE;
-    }
-#endif
-
 	secure_storage_its_store_settings_get_name(uid, name);
 
 	settings_load_subtree_direct(name, load_direct_setting, &load_params);
@@ -214,13 +157,6 @@ psa_status_t secure_storage_its_store_remove(secure_storage_its_uid_t uid)
 {
 	int ret;
 	char name[SECURE_STORAGE_ITS_STORE_SETTINGS_NAME_BUF_SIZE];
-
-#if (!ZEPHYR_SDK)
-    if (init_settings_subsys() != PSA_SUCCESS)
-    {
-        return PSA_ERROR_STORAGE_FAILURE;
-    }
-#endif
 
 	secure_storage_its_store_settings_get_name(uid, name);
 
