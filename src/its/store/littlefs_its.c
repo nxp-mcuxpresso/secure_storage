@@ -330,6 +330,8 @@ psa_status_t secure_storage_its_store_remove(secure_storage_its_uid_t uid)
             status = PSA_ERROR_STORAGE_FAILURE;
             goto exit;
         }
+
+        status = PSA_SUCCESS;
 exit:
 #if defined(SDK_OS_FREE_RTOS)
         if (lfs_mutex_present)
