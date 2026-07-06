@@ -31,7 +31,9 @@
 #if defined(ZEPHYR_SDK)
 LOG_MODULE_DECLARE(secure_storage, CONFIG_SECURE_STORAGE_LOG_LEVEL);
 #else
+#if !defined(MIN)
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
+#endif
 #endif
 
 static void log_failed_operation(const char *operation, const char *preposition, psa_status_t ret)
