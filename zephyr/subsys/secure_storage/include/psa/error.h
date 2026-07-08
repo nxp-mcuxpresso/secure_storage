@@ -18,7 +18,13 @@
  */
 #include <stdint.h>
 
+/* If PSA_CRYPTO_TYPES_H is defined, psa_status_t is already provided by
+ * mbedtls3x/include/psa/crypto_types.h. Guard against typedef redefinition
+ * which is treated as a hard error by ARMClang (MDK).
+ */
+#ifndef PSA_CRYPTO_TYPES_H
 typedef int32_t psa_status_t;
+#endif
 
 #define PSA_SUCCESS ((psa_status_t)0)
 
