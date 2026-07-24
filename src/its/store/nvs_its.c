@@ -24,7 +24,7 @@
 #include <errno.h>
 #else
 #include "nvs_port.h"
-#include "settings.h"
+#include <zephyr/settings/settings.h>
 #endif
 
 LOG_MODULE_DECLARE(secure_storage, CONFIG_SECURE_STORAGE_LOG_LEVEL);
@@ -60,7 +60,9 @@ SYS_INIT(init_settings_subsys, APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY);
 #define BUILD_ASSERT(EXPR, MSG...)
 #endif
 
+#ifndef __ASSERT_NO_MSG
 #define __ASSERT_NO_MSG(EXPR) assert(EXPR)
+#endif
 #endif
 
 BUILD_ASSERT(CONFIG_SECURE_STORAGE_ITS_STORE_SETTINGS_NAME_MAX_LEN <= SETTINGS_MAX_NAME_LEN);
