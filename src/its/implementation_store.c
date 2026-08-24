@@ -19,11 +19,13 @@
 
 #include <secure_storage_log.h>
 
+#include "psa/error.h"
+
 #if !defined(MIN)
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 #endif
 
-#define PSA_ITS_MAGIC_STRING "PSA\0ITS\0"
+#define PSA_ITS_MAGIC_STRING ("PSA""\0""ITS""\0")
 #define PSA_ITS_MAGIC_LENGTH 8
 
 typedef struct {
@@ -59,9 +61,9 @@ static psa_status_t get_stored_data(
 static psa_status_t get_entry_info(secure_storage_its_uid_t uid,
                                    size_t *data_len, psa_storage_create_flags_t *create_flags)
 {
-	psa_status_t ret;
-        psa_its_file_header_t header;
-	size_t header_len;
+	psa_status_t ret = PSA_ERROR_STORAGE_FAILURE;
+	psa_its_file_header_t header = {0};
+	size_t header_len = 0u;
 
 	ret = get_stored_data(uid, (uint8_t *)&header, sizeof(header), &header_len);
 	if (ret == PSA_SUCCESS) {
@@ -86,7 +88,7 @@ static bool check_stored_entry(secure_storage_its_uid_t uid, size_t data_length,
 		/* Allow overwriting corrupted entries to not be stuck with them forever. */
 		return false;
 	}
-	if (existing_create_flags & PSA_STORAGE_FLAG_WRITE_ONCE) {
+	if ((existing_create_flags & PSA_STORAGE_FLAG_WRITE_ONCE) != 0u) {
 		*ret = PSA_ERROR_NOT_PERMITTED;
 		return true;
 	}
@@ -102,15 +104,20 @@ static psa_status_t store_entry(secure_storage_its_uid_t uid, size_t data_length
 	uint8_t stored_data[CONFIG_SECURE_STORAGE_ITS_MAX_DATA_SIZE];
 	size_t stored_data_len;
         psa_its_file_header_t header;
+
+	/* Make sure we don't ever overflow */
+	if (data_length > ((size_t)CONFIG_SECURE_STORAGE_ITS_MAX_DATA_SIZE - sizeof(header))) {
+		return PSA_ERROR_INSUFFICIENT_STORAGE;
+	}
         
-        memcpy(header.magic, PSA_ITS_MAGIC_STRING, PSA_ITS_MAGIC_LENGTH);
+        (void)memcpy(header.magic, PSA_ITS_MAGIC_STRING, PSA_ITS_MAGIC_LENGTH);
         header.size = data_length;
         header.flags = create_flags;
         
-        memcpy(stored_data, (uint8_t *)&header, sizeof(header));        
+        (void)memcpy(stored_data, (uint8_t *)&header, sizeof(header));
         stored_data_len = sizeof(header);
         
-        memcpy(stored_data +  sizeof(header), p_data, data_length);        
+        (void)memcpy(stored_data +  sizeof(header), (const uint8_t *)p_data, data_length);
         stored_data_len += data_length;
 
 	ret = secure_storage_its_store_set(uid, stored_data_len, stored_data);
@@ -124,11 +131,11 @@ static psa_status_t store_entry(secure_storage_its_uid_t uid, size_t data_length
 psa_status_t secure_storage_its_get_info(secure_storage_its_uid_t uid,
 					 struct psa_storage_info_t *p_info)
 {
-	psa_status_t ret;
-        psa_its_file_header_t header;
-        size_t data_len;
+	psa_status_t ret = PSA_ERROR_STORAGE_FAILURE;
+        psa_its_file_header_t header = {0};
+        size_t data_len = 0u;
         
-	if (uid.uid == 0 || p_info == NULL) {
+	if (uid.uid == 0u || p_info == NULL) {
 		return PSA_ERROR_INVALID_ARGUMENT;
 	}
 
@@ -148,13 +155,13 @@ psa_status_t secure_storage_its_set(secure_storage_its_uid_t uid, size_t data_le
 {
 	psa_status_t ret;
 
-	if (uid.uid == 0 || (p_data == NULL && data_length != 0)) {
+	if (uid.uid == 0u || (p_data == NULL && data_length != 0u)) {
 		return PSA_ERROR_INVALID_ARGUMENT;
 	}
-	if (create_flags & ~SECURE_STORAGE_ALL_CREATE_FLAGS) {
+	if ((create_flags & ~SECURE_STORAGE_ALL_CREATE_FLAGS) != 0u) {
 		return PSA_ERROR_NOT_SUPPORTED;
 	}
-	if (data_length + sizeof(psa_its_file_header_t) > CONFIG_SECURE_STORAGE_ITS_MAX_DATA_SIZE) {
+	if (data_length > ((size_t)CONFIG_SECURE_STORAGE_ITS_MAX_DATA_SIZE - sizeof(psa_its_file_header_t))) {
 		LOG_DBG("Passed data length (%zu) exceeds maximum allowed (%u).",
 			data_length, CONFIG_SECURE_STORAGE_ITS_MAX_DATA_SIZE);
 		return PSA_ERROR_INSUFFICIENT_STORAGE;
@@ -173,32 +180,37 @@ psa_status_t secure_storage_its_set(secure_storage_its_uid_t uid, size_t data_le
 psa_status_t secure_storage_its_get(secure_storage_its_uid_t uid, size_t data_offset,
 				    size_t data_size, void *p_data, size_t *p_data_length)
 {
-	if (uid.uid == 0 || (p_data == NULL && data_size != 0) || p_data_length == NULL) {
+	if (uid.uid == 0u || (p_data == NULL && data_size != 0u) || p_data_length == NULL) {
 		return PSA_ERROR_INVALID_ARGUMENT;
 	}
-	if (data_size == 0) {
+	if (data_size == 0u) {
 		*p_data_length = 0;
 		return PSA_SUCCESS;
+	}
+	if ((SIZE_MAX - data_offset) < data_size) {
+		/* data_offset + data_size would wrap */
+		return PSA_ERROR_INVALID_ARGUMENT;
 	}
         if (data_offset + data_size < data_offset) {
                 return PSA_ERROR_INVALID_ARGUMENT;
         }
-	psa_status_t ret;
+	psa_status_t ret = PSA_ERROR_STORAGE_FAILURE;
         psa_storage_create_flags_t create_flags;
-	size_t entry_len;
-        uint8_t stored_data[CONFIG_SECURE_STORAGE_ITS_MAX_DATA_SIZE];
-	size_t stored_data_len;
+	size_t entry_len = 0u;
+        uint8_t stored_data[CONFIG_SECURE_STORAGE_ITS_MAX_DATA_SIZE] = {0u};
+	size_t stored_data_len = 0u;
 
         ret = get_entry_info(uid, &entry_len, &create_flags);
-        if (ret != PSA_SUCCESS)
+        if (ret != PSA_SUCCESS) {
             return ret;
+        }
         
         /* Check if offset is beyond the data in ITS entry */
         if (data_offset > entry_len) {
                 return PSA_ERROR_INVALID_ARGUMENT;
         }
         
-        /* Check  if requetsed data is more than data in ITS entry */
+        /* Check if requested data is more than data in ITS entry */
         if (data_offset + data_size > entry_len) {
                 return PSA_ERROR_INVALID_ARGUMENT;
         }
@@ -209,10 +221,17 @@ psa_status_t secure_storage_its_get(secure_storage_its_uid_t uid, size_t data_of
 		return ret;
 	}
         
+	/* Check for possible wrapping */
+	if (stored_data_len < sizeof(psa_its_file_header_t)) {
+		return PSA_ERROR_INVALID_ARGUMENT;
+	}
+	if (stored_data_len - sizeof(psa_its_file_header_t) < data_offset) {
+		return PSA_ERROR_INVALID_ARGUMENT;
+	}
         *p_data_length = MIN(data_size, stored_data_len - sizeof(psa_its_file_header_t) - data_offset);
         
         /* The returned data has PSA ITS header in beginning. Copy from after the header and offset needed */
-        memcpy(p_data, stored_data + sizeof(psa_its_file_header_t) + data_offset, *p_data_length);
+        (void)memcpy((uint8_t *)p_data, stored_data + sizeof(psa_its_file_header_t) + data_offset, *p_data_length);
         	
 	return ret;
 }
@@ -224,12 +243,12 @@ psa_status_t secure_storage_its_remove(secure_storage_its_uid_t uid)
 	psa_storage_create_flags_t create_flags;
 	size_t data_len;
 
-	if (uid.uid == 0) {
+	if (uid.uid == 0u) {
 		return PSA_ERROR_INVALID_ARGUMENT;
 	}
 
 	ret = get_entry_info(uid, &data_len, &create_flags);
-	if (ret == PSA_SUCCESS && (create_flags & PSA_STORAGE_FLAG_WRITE_ONCE)) {
+	if (ret == PSA_SUCCESS && (create_flags & PSA_STORAGE_FLAG_WRITE_ONCE) != 0u) {
 		return PSA_ERROR_NOT_PERMITTED;
 	}
 	/* Allow overwriting corrupted entries as well to not be stuck with them forever. */

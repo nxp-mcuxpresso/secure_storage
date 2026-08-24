@@ -16,13 +16,13 @@
 enum { NAME_BUF_SIZE = sizeof(CONFIG_SECURE_STORAGE_ITS_STORE_FATFS_PREFIX) - 1
 		       + 3 * (sizeof(secure_storage_its_uid_t) + 1) };
 
-static void make_name(secure_storage_its_uid_t uid, char name[static NAME_BUF_SIZE])
+static void make_name(secure_storage_its_uid_t uid, char name[NAME_BUF_SIZE])
 {
-	snprintf(name, NAME_BUF_SIZE, "%s" PSA_ITS_STORAGE_FILENAME_PATTERN,
-		 CONFIG_SECURE_STORAGE_ITS_STORE_FATFS_PREFIX,
-                 uid.caller_id,
-                 (unsigned)(uid.uid >> 32),
-                 (unsigned)(uid.uid & 0xffffffff));
+	(void)snprintf(name, NAME_BUF_SIZE, "%s" PSA_ITS_STORAGE_FILENAME_PATTERN,
+                   CONFIG_SECURE_STORAGE_ITS_STORE_FATFS_PREFIX,
+                   uid.caller_id,
+                   (unsigned)(uid.uid >> 32),
+                   (unsigned)(uid.uid & 0xffffffffu));
 }
 
 psa_status_t secure_storage_its_store_set(secure_storage_its_uid_t uid,

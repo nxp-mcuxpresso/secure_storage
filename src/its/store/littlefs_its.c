@@ -4,10 +4,12 @@
  */
 
 #include <errno.h>
+#include <stdint.h>
 #include <stdio.h>
 
 #include <zephyr/secure_storage/its/store.h>
 
+#include <secure_storage.h>
 #include <secure_storage_log.h>
 #include <secure_storage_lfs.h>
 
@@ -19,6 +21,9 @@ extern int lfs_storage_init(const struct lfs_config *lfsc);
 lfs_t lfs;
 struct lfs_config cfg;
 int lfs_mounted;
+
+#define LFS_MOUNTED     1
+#define LFS_NOT_MOUNTED 0
 
 #if defined(SDK_OS_FREE_RTOS)
 static osa_mutex_handle_t lfs_mutex;
@@ -43,19 +48,19 @@ enum {
                   + 1                                                             // '\0'
 };
  
-static void make_name(secure_storage_its_uid_t uid, char name[static NAME_BUF_SIZE])
+static void make_name(secure_storage_its_uid_t uid, char name[NAME_BUF_SIZE])
 {
 #ifdef CONFIG_SECURE_STORAGE_64_BIT_UID
-    snprintf(name, NAME_BUF_SIZE, "%s/" PSA_ITS_STORAGE_FILENAME_PATTERN,
-             CONFIG_SECURE_STORAGE_ITS_STORE_LITTLEFS_PREFIX,
-             uid.caller_id,
-             (unsigned)(uid.uid >> 32),
-             (unsigned)(uid.uid & 0xffffffff));
+    (void)snprintf(name, NAME_BUF_SIZE, "%s/" PSA_ITS_STORAGE_FILENAME_PATTERN,
+                   CONFIG_SECURE_STORAGE_ITS_STORE_LITTLEFS_PREFIX,
+                   uid.caller_id,
+                   (unsigned)(uid.uid >> 32),
+                   (unsigned)(uid.uid & 0xffffffffu));
 #else
-    snprintf(name, NAME_BUF_SIZE, "%s/" PSA_ITS_STORAGE_FILENAME_PATTERN,
-             CONFIG_SECURE_STORAGE_ITS_STORE_LITTLEFS_PREFIX,
-             uid.caller_id,
-             (unsigned)uid.uid);
+    (void)snprintf(name, NAME_BUF_SIZE, "%s/" PSA_ITS_STORAGE_FILENAME_PATTERN,
+                   CONFIG_SECURE_STORAGE_ITS_STORE_LITTLEFS_PREFIX,
+                   uid.caller_id,
+                   (unsigned)uid.uid);
 #endif
 }
 
@@ -67,7 +72,7 @@ psa_status_t secure_storage_its_store_set(secure_storage_its_uid_t uid,
 	char name[NAME_BUF_SIZE];
         psa_status_t status = PSA_ERROR_STORAGE_FAILURE;
 
-        if (!lfs_mounted)
+        if (LFS_NOT_MOUNTED == lfs_mounted)
         {
             LOG_ERR("LFS not mounted\r\n");
             return PSA_ERROR_STORAGE_FAILURE;
@@ -81,9 +86,9 @@ psa_status_t secure_storage_its_store_set(secure_storage_its_uid_t uid,
                 (void)OSA_MutexLock((osa_mutex_handle_t)lfs_mutex, osaWaitForever_c);
         }
 #endif /* SDK_OS_FREE_RTOS */
-        res = lfs_file_open(&lfs, &file, name, LFS_O_WRONLY | LFS_O_CREAT);
+        res = lfs_file_open(&lfs, &file, name, (int)((uint32_t)LFS_O_WRONLY | (uint32_t)LFS_O_CREAT));
 
-        if (res)
+        if (res != 0)
         {
             LOG_DBG("\rError opening file: %i\r\n", res);
             status = PSA_ERROR_INSUFFICIENT_STORAGE;
@@ -101,7 +106,7 @@ psa_status_t secure_storage_its_store_set(secure_storage_its_uid_t uid,
         status = PSA_SUCCESS;
 exit:        
         res = lfs_file_close(&lfs, &file);
-        if (res)
+        if (res != 0)
         {
             LOG_ERR("\rError closing file: %i\r\n", res);
             status = PSA_ERROR_STORAGE_FAILURE;
@@ -124,7 +129,7 @@ psa_status_t secure_storage_its_store_get(secure_storage_its_uid_t uid, size_t d
 	char name[NAME_BUF_SIZE];
         psa_status_t status = PSA_SUCCESS;
 
-        if (!lfs_mounted)
+        if (LFS_NOT_MOUNTED == lfs_mounted)
         {
             LOG_ERR("LFS not mounted\r\n");
             return PSA_ERROR_STORAGE_FAILURE;
@@ -137,8 +142,8 @@ psa_status_t secure_storage_its_store_get(secure_storage_its_uid_t uid, size_t d
                 (void)OSA_MutexLock((osa_mutex_handle_t)lfs_mutex, osaWaitForever_c);
         }
 #endif /* SDK_OS_FREE_RTOS */
-        res = lfs_file_open(&lfs, &file, name, LFS_O_RDONLY);
-        if (res)
+        res = lfs_file_open(&lfs, &file, name, (int)LFS_O_RDONLY);
+        if (res != 0)
         {
             LOG_DBG("\rError opening file: %i\r\n", res);
             status = PSA_ERROR_DOES_NOT_EXIST;
@@ -153,10 +158,10 @@ psa_status_t secure_storage_its_store_get(secure_storage_its_uid_t uid, size_t d
             goto exit;
         }
 
-        *data_length = res;
+        *data_length = (size_t)res;
         
         res = lfs_file_close(&lfs, &file);
-        if (res)
+        if (res != 0)
         {
             LOG_ERR("\rError closing file: %i\r\n", res);
             status = PSA_ERROR_STORAGE_FAILURE;
@@ -181,7 +186,7 @@ psa_status_t secure_storage_its_store_set_at_offset(secure_storage_its_uid_t uid
 	char name[NAME_BUF_SIZE];
         psa_status_t status = PSA_ERROR_STORAGE_FAILURE;
 
-        if (!lfs_mounted)
+        if (LFS_NOT_MOUNTED == lfs_mounted)
         {
             LOG_ERR("LFS not mounted\r\n");
             return PSA_ERROR_STORAGE_FAILURE;
@@ -194,17 +199,21 @@ psa_status_t secure_storage_its_store_set_at_offset(secure_storage_its_uid_t uid
                 (void)OSA_MutexLock((osa_mutex_handle_t)lfs_mutex, osaWaitForever_c);
         }
 #endif /* SDK_OS_FREE_RTOS */
-        res = lfs_file_open(&lfs, &file, name, LFS_O_WRONLY | LFS_O_CREAT);
-        if (res)
+        res = lfs_file_open(&lfs, &file, name, (int)((uint32_t)LFS_O_WRONLY | (uint32_t)LFS_O_CREAT));
+        if (res != 0)
         {
             LOG_DBG("\rError opening file: %i\r\n", res);
             status = PSA_ERROR_INSUFFICIENT_STORAGE;
             goto exit;
         }
         
-        if (data_offset != 0)
+        if (data_offset != 0u)
         {
-              res = lfs_file_seek(&lfs, &file, data_offset, LFS_SEEK_CUR);
+              if (data_offset > (size_t)INT32_MAX) {
+                status = PSA_ERROR_INVALID_ARGUMENT;
+                goto exit;
+              }
+              res = lfs_file_seek(&lfs, &file, (lfs_soff_t)data_offset, (int)LFS_SEEK_CUR);
               if (res < 0)
               {
                   status = PSA_ERROR_STORAGE_FAILURE;
@@ -223,7 +232,7 @@ psa_status_t secure_storage_its_store_set_at_offset(secure_storage_its_uid_t uid
         status = PSA_SUCCESS;
 exit:        
         res = lfs_file_close(&lfs, &file);
-        if (res)
+        if (res != 0)
         {
             LOG_ERR("\rError closing file: %i\r\n", res);
             status = PSA_ERROR_STORAGE_FAILURE;
@@ -246,7 +255,7 @@ psa_status_t secure_storage_its_store_get_from_offset(secure_storage_its_uid_t u
 	char name[NAME_BUF_SIZE];
         psa_status_t status = PSA_SUCCESS;
 
-        if (!lfs_mounted)
+        if (LFS_NOT_MOUNTED == lfs_mounted)
         {
             LOG_ERR("LFS not mounted\r\n");
             return PSA_ERROR_STORAGE_FAILURE;
@@ -259,17 +268,21 @@ psa_status_t secure_storage_its_store_get_from_offset(secure_storage_its_uid_t u
             (void)OSA_MutexLock((osa_mutex_handle_t)lfs_mutex, osaWaitForever_c);
         }
 #endif /* SDK_OS_FREE_RTOS */
-        res = lfs_file_open(&lfs, &file, name, LFS_O_RDONLY);
-        if (res)
+        res = lfs_file_open(&lfs, &file, name, (int)LFS_O_RDONLY);
+        if (res != 0)
         {
             LOG_DBG("\rError opening file: %i\r\n", res);
             status = PSA_ERROR_DOES_NOT_EXIST;
             goto exit;
         }
         
-        if (data_offset != 0)
+        if (data_offset != 0u)
         {
-              res = lfs_file_seek(&lfs, &file, data_offset, LFS_SEEK_CUR);
+              if (data_offset > (size_t)INT32_MAX) {
+                status = PSA_ERROR_INVALID_ARGUMENT;
+                goto exit;
+              }
+              res = lfs_file_seek(&lfs, &file, (lfs_soff_t)data_offset, (int)LFS_SEEK_CUR);
               if (res < 0)
               {
                   status = PSA_ERROR_STORAGE_FAILURE;
@@ -285,10 +298,10 @@ psa_status_t secure_storage_its_store_get_from_offset(secure_storage_its_uid_t u
             goto exit;
         }
 
-        *data_length = res;
+        *data_length = (size_t)res;
         
         res = lfs_file_close(&lfs, &file);
-        if (res)
+        if (res != 0)
         {
             LOG_ERR("\rError closing file: %i\r\n", res);
             status = PSA_ERROR_STORAGE_FAILURE;
@@ -312,7 +325,7 @@ psa_status_t secure_storage_its_store_remove(secure_storage_its_uid_t uid)
 	make_name(uid, name);
         psa_status_t status = PSA_ERROR_STORAGE_FAILURE;
         
-        if (!lfs_mounted)
+        if (LFS_NOT_MOUNTED == lfs_mounted)
         {
             LOG_ERR("LFS not mounted\r\n");
             return PSA_ERROR_STORAGE_FAILURE;
@@ -324,7 +337,7 @@ psa_status_t secure_storage_its_store_remove(secure_storage_its_uid_t uid)
         }
 #endif /* SDK_OS_FREE_RTOS */
         res = lfs_remove(&lfs, name);
-        if (res)
+        if (res != 0)
         {
             LOG_ERR("\rError while removing: %i\r\n", res);
             status = PSA_ERROR_STORAGE_FAILURE;
@@ -347,7 +360,12 @@ psa_status_t secure_storage_its_initialize(void)
 {
         int status;
         int res;
-        lfs_get_default_config(&cfg);
+        status = lfs_get_default_config(&cfg);
+        if (status != 0)
+        {
+            LOG_ERR("LFS get default config failed: %i\r\n", status);
+            return PSA_ERROR_STORAGE_FAILURE;
+        }
 
         status = lfs_storage_init(&cfg);
         if (status != 0)
@@ -357,29 +375,29 @@ psa_status_t secure_storage_its_initialize(void)
         }
         
         res = lfs_mount(&lfs, &cfg);
-        if (res)
+        if (res != 0)
         {
             LOG_DBG("\rError mounting LFS\r\n");
             LOG_DBG("Formatting filesystem. You will loose any data\r\n");
             res = lfs_format(&lfs, &cfg);
-            if (res)
+            if (res != 0)
             {
                 LOG_ERR("\rError formatting LFS: %d\r\n", res);
                 return PSA_ERROR_STORAGE_FAILURE;
              }
              res = lfs_mount(&lfs, &cfg);
-             if (res)
+             if (res != 0)
              {
                  LOG_ERR("Mounting failed even after formatting\r\n");
                  return PSA_ERROR_STORAGE_FAILURE;
               }
         }
         
-        lfs_mounted = 1;
+        lfs_mounted = LFS_MOUNTED;
      
         LOG_DBG("\r\nCreate directory......\r\n");
         res = lfs_mkdir(&lfs, CONFIG_SECURE_STORAGE_ITS_STORE_LITTLEFS_PREFIX);
-        if (res && res != LFS_ERR_EXIST)
+        if ((res != (int)LFS_ERR_OK) && (res != (int)LFS_ERR_EXIST))
         {
             LOG_ERR("Make directory failed.\r\n");
             return PSA_ERROR_STORAGE_FAILURE;
@@ -401,14 +419,14 @@ psa_status_t secure_storage_notify_lfs_handler(void *lfs_handler)
         }
 #endif /* SDK_OS_FREE_RTOS */
         res = lfs_mkdir(&lfs, CONFIG_SECURE_STORAGE_ITS_STORE_LITTLEFS_PREFIX);
-        if (res && res != LFS_ERR_EXIST)
+        if ((res != (int)LFS_ERR_OK) && (res != (int)LFS_ERR_EXIST))
         {
             LOG_ERR("Make directory failed.\r\n");
             status =  PSA_ERROR_STORAGE_FAILURE;
             goto exit;
         }
 
-        lfs_mounted = 1;
+        lfs_mounted = LFS_MOUNTED;
         status = PSA_SUCCESS;
 exit:
 #if defined(SDK_OS_FREE_RTOS)
