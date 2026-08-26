@@ -18,9 +18,9 @@
 extern int lfs_get_default_config(struct lfs_config *lfsc);
 extern int lfs_storage_init(const struct lfs_config *lfsc);
 
-lfs_t lfs;
-struct lfs_config cfg;
-int lfs_mounted;
+static lfs_t lfs;
+static struct lfs_config cfg;
+static int lfs_mounted;
 
 #define LFS_MOUNTED     1
 #define LFS_NOT_MOUNTED 0
